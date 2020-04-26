@@ -117,6 +117,21 @@ impl Maze {
     self.ds.debug()
   }
 
+  pub fn has_no_wall(&self, loc_a: usize, loc_b: usize) -> bool {
+    if let Some(adjacent) = self.ds.get_parent(loc_a) {
+      if adjacent == loc_b {
+        return true;
+      }
+    }
+
+    if let Some(adjacent) = self.ds.get_parent(loc_b) {
+      if adjacent == loc_a {
+        return true;
+      }
+    }
+    false
+  }
+
   pub fn feed_whitespace(&self, buf: &mut ScreenBuffer) {
     for i in 0..(self.w * self.h) {
       if let Some(adjancent) = self.ds.get_parent(i) {

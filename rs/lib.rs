@@ -8,3 +8,4 @@ mod maze;
 mod draw_api;
 mod screen_buffer;
 pub mod boundary;
+mod player;

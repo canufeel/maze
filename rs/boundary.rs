@@ -8,6 +8,7 @@ use alloc::vec::Vec;
 use crate::screen_buffer::{Color, ScreenBuffer};
 use crate::maze::Maze;
 use crate::draw_api::DrawApi;
+use crate::player::{Player, MoveEventKey};
 
 #[wasm_bindgen]
 extern "C" {
@@ -63,10 +64,6 @@ impl DrawApi for Api {
     if let Some(mut clamped) = self.image_data_data.take() {
       let cl: Clamped<&mut [u8]> = Clamped(&mut *clamped.as_mut_slice());
       let img_data = ImageData::new_with_u8_clamped_array(cl, self.width as u32).unwrap();
-      /*for (idx, i) in img_data.data().iter().enumerate() {
-        console::log_2(&(idx as i32).into(),&(i.clone() as i32).into());
-      }*/
-
       self.ctx.put_image_data(&img_data, 0.0, 0.0)
         .map_err(|e| console::log_1(&e))
         .unwrap();
@@ -75,17 +72,6 @@ impl DrawApi for Api {
   }
 
   fn draw_api(&mut self, x: usize, y: usize, color: Color) {
-    /*let log_x: JsValue = (x.clone() as i32).into();
-    let log_y: JsValue = (y.clone() as i32).into();
-    let col_log: [u8; 4] = color.clone().into();*/
-    /*console::log_6(
-      &log_x,
-      &log_y,
-      &col_log[0].into(),
-      &col_log[1].into(),
-      &col_log[2].into(),
-      &col_log[3].into()
-    );*/
     if self.image_data_data.is_none() {
       self.draw_start();
     }
@@ -97,6 +83,30 @@ impl DrawApi for Api {
         // console::log_2(&((start_idx + i) as i32).into(), &img_data[start_idx + i].clone().into());
       }
     }
+  }
+
+  fn draw_item(
+    &mut self,
+    size: usize,
+    x: usize,
+    y: usize,
+    color: Color
+  ) {
+    let mut clamped = self.ctx.create_image_data_with_sw_and_sh(
+      (size - 1) as f64,
+      (size - 1) as f64
+    ).map_err(|e| {
+      console::log_1(&e);
+    }).unwrap().data();
+    let col: [u8; 4] = color.into();
+    for (idx, value) in clamped.iter_mut().enumerate() {
+      *value = col[idx % 4];
+    }
+    let cl: Clamped<&mut [u8]> = Clamped(&mut *clamped.as_mut_slice());
+    let img_data = ImageData::new_with_u8_clamped_array(cl, (size - 1) as u32).unwrap();
+    self.ctx.put_image_data(&img_data, (x + 1) as f64, (y + 1) as f64)
+      .map_err(|e| console::log_1(&e))
+      .unwrap();
   }
 }
 
@@ -129,8 +139,22 @@ pub fn start() {
     log("Buffer created");
     maze.feed_whitespace(&mut buf);
     buf.draw();
-    for i in maze.debug() {
-      console::log_1(&(i.clone() as i32).into());
-    }
+    let mut player = Player::new(
+      rng(0, COLUMNS * ROWS),
+      COLUMNS,
+      ROWS,
+      &mut buf
+    );
+
+    let document = web_sys::window().unwrap().document().unwrap();
+    let closure = Closure::wrap(Box::new(move |event: web_sys::KeyboardEvent| {
+      let key_code = event.key_code();
+      // console::log_1(&(key_code.into()));
+      let key_event: MoveEventKey = event.key_code().into();
+      player.on_move(key_event, &maze, &mut buf);
+    }) as Box<dyn FnMut(_)>);
+
+    document.add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref()).unwrap();
+    closure.forget();
   }
 }

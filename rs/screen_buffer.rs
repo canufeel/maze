@@ -6,7 +6,8 @@ use crate::draw_api::DrawApi;
 #[derive(Copy, Clone)]
 pub enum Color {
   Black,
-  White
+  White,
+  Green
 }
 
 impl Into<[u8; 4]> for Color {
@@ -17,6 +18,9 @@ impl Into<[u8; 4]> for Color {
       },
       Color::Black => {
         [0, 0, 0, 255]
+      },
+      Color::Green => {
+        [0, 255, 0, 255]
       }
     }
   }
@@ -119,7 +123,7 @@ impl ScreenBuffer {
         let x = right_col * self.block_size;
         // console::log_3(&(y0.clone() as i32).into(), &(y1.clone() as i32).into(), &(x.clone() as i32).into());
         self.fill_vertical_line(
-          y0,
+          y0 + 1,
           y1,
           x,
           color
@@ -127,7 +131,7 @@ impl ScreenBuffer {
       },
       (l, r) if l + 1 != r => {
         self.fill_horizontal_line(
-          left_col * self.block_size,
+          left_col * self.block_size + 1,
           (left_col + 1) * self.block_size,
           right_row * self.block_size,
           color
@@ -135,6 +139,17 @@ impl ScreenBuffer {
       },
       (_, _) => unreachable!()
     }
+  }
+
+  pub fn draw_player(&mut self, loc: usize, color: Color) {
+    let x = loc % self.columns;
+    let y = loc / self.columns;
+    self.draw_api.draw_item(
+      self.block_size,
+      x * self.block_size,
+      y * self.block_size,
+      color
+    );
   }
 
   pub fn draw(&mut self) {
@@ -158,6 +173,13 @@ mod tests {
   impl DrawApi for ApiMock {
     fn draw_apply(&mut self) {}
     fn draw_api(&mut self, x: usize, y: usize, color: Color) {}
+    fn draw_item(
+      &mut self,
+      size: usize,
+      x: usize,
+      y: usize,
+      color: Color
+    ) {}
   }
 
   #[test]
