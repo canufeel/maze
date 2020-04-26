@@ -1,6 +1,7 @@
 use crate::disjoint_set::DisjointSet;
 use crate::screen_buffer::ScreenBuffer;
-use std::borrow::Borrow;
+use alloc::borrow::Borrow;
+use alloc::boxed::Box;
 
 pub struct Maze {
   ds: DisjointSet,

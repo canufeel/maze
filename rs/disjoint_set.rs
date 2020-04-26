@@ -1,6 +1,7 @@
+use alloc::vec;
 
 pub struct DisjointSet {
-  s: Vec<isize>
+  s: vec::Vec<isize>
 }
 
 impl DisjointSet {

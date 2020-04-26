@@ -1,4 +1,6 @@
-use std::borrow::Borrow;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+use crate::draw_api::DrawApi;
 
 #[derive(Copy, Clone)]
 pub enum Color {
@@ -6,11 +8,24 @@ pub enum Color {
   White
 }
 
+impl Into<[u8; 4]> for Color {
+  fn into(self) -> [u8; 4] {
+    match self {
+      Color::White => {
+        [255, 255, 255, 255]
+      },
+      Color::Black => {
+        [0, 0, 0, 255]
+      }
+    }
+  }
+}
+
 pub struct ScreenBuffer {
   block_size: usize,
   columns: usize,
   rows: usize,
-  draw_api: Box<dyn Fn(usize, usize, Color)>,
+  draw_api: Box<dyn DrawApi>,
   buffer: Vec<Vec<Color>>
 }
 
@@ -19,7 +34,7 @@ impl ScreenBuffer {
     block_size: usize,
     columns: usize,
     rows: usize,
-    draw_api: Box<dyn Fn(usize, usize, Color)>
+    draw_api: Box<dyn DrawApi>
   ) -> Self {
     let mut inner_buf = Vec::new();
     for x in 0..(columns * block_size + 1) {
@@ -116,13 +131,13 @@ impl ScreenBuffer {
     }
   }
 
-  pub fn draw(&self) {
-    let api: &dyn Fn(usize, usize, Color) = self.draw_api.borrow();
+  pub fn draw(&mut self) {
     for x in 0..self.buffer.len() {
       for y in 0..self.buffer[x].len() {
-        api(x, y, self.buffer[x][y]);
+        self.draw_api.draw_api(x, y, self.buffer[x][y]);
       }
     }
+    self.draw_api.draw_apply();
   }
 }
 
@@ -132,16 +147,22 @@ mod tests {
   use super::*;
   use crate::maze::Maze;
 
+  struct ApiMock {}
+
+  impl DrawApi for ApiMock {
+    fn draw_apply(&mut self) {}
+    fn draw_api(&mut self, x: usize, y: usize, color: Color) {}
+  }
+
   #[test]
   fn can_construct_screen_buffer() {
-    let api = |_: usize, _: usize, _: Color| {
-
-    };
+    let draw_api = |_: usize, _: usize, _: Color| {};
+    let draw_apply = || {};
     let buf = ScreenBuffer::new(
       5,
       5,
       5,
-      Box::new(api)
+      Box::new(ApiMock {})
     );
   }
 
@@ -158,12 +179,14 @@ mod tests {
       h,
       Box::new(rnd)
     );
-    let api = |_: usize, _: usize, _: Color| {};
+    let draw_api = |_: usize, _: usize, _: Color| {};
+    let draw_apply = || {};
+    let draw_apply = || {};
     let mut buf = ScreenBuffer::new(
       5,
       w,
       h,
-      Box::new(api)
+      Box::new(ApiMock {})
     );
     maze.feed_whitespace(&mut buf);
   }
