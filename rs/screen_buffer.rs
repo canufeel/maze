@@ -7,7 +7,9 @@ use crate::draw_api::DrawApi;
 pub enum Color {
   Black,
   White,
-  Green
+  Green,
+  Blue,
+  Orange
 }
 
 impl Into<[u8; 4]> for Color {
@@ -21,6 +23,12 @@ impl Into<[u8; 4]> for Color {
       },
       Color::Green => {
         [0, 255, 0, 255]
+      },
+      Color::Blue => {
+        [0, 0, 255, 255]
+      },
+      Color::Orange => {
+        [240, 140, 66, 255]
       }
     }
   }
@@ -141,7 +149,7 @@ impl ScreenBuffer {
     }
   }
 
-  pub fn draw_player(&mut self, loc: usize, color: Color) {
+  pub fn draw_item(&mut self, loc: usize, color: Color) {
     let x = loc % self.columns;
     let y = loc / self.columns;
     self.draw_api.draw_item(

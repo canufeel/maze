@@ -38,8 +38,9 @@ impl Maze {
       .collect();
 
     while not_included_idxes.len() > 0 {
-      let (a, b) = maze.find_wall_pair_from_leftovers(&mut not_included_idxes);
-      maze.ds.union(a, b);
+      if let Some((a, b)) = maze.find_wall_pair_from_leftovers(&mut not_included_idxes) {
+        maze.ds.union(a, b);
+      }
     }
 
     let mut iterations = 0;
@@ -67,14 +68,16 @@ impl Maze {
     self.w * self.h
   }
 
-  fn find_wall_pair_from_leftovers(&self, leftovers: &mut VecDeque<usize>) -> (usize, usize) {
+  fn find_wall_pair_from_leftovers(&self, leftovers: &mut VecDeque<usize>) -> Option<(usize, usize)> {
     let rng: &dyn Fn(usize, usize) -> usize = self.rng.borrow();
     let el_idx = rng(0, leftovers.len());
     if let Some(el) = leftovers.remove(el_idx) {
       if let Some(pair) = self.find_wall_pair(el) {
-        return pair;
+        return Some(pair);
+      } else {
+        return None;
       }
-      unreachable!();
+
     }
     unreachable!();
   }

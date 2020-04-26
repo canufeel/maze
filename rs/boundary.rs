@@ -9,6 +9,7 @@ use crate::screen_buffer::{Color, ScreenBuffer};
 use crate::maze::Maze;
 use crate::draw_api::DrawApi;
 use crate::player::{Player, MoveEventKey};
+use crate::items::{Exit, Apple};
 
 #[wasm_bindgen]
 extern "C" {
@@ -113,6 +114,37 @@ impl DrawApi for Api {
 static COLUMNS: usize = 60;
 static ROWS: usize = 40;
 static BLOCK_SIZE: usize = 20;
+static APPLES_AMOUNT: usize = 8;
+
+fn gen_exit(
+  player_loc: usize,
+  buf: &mut ScreenBuffer,
+  rng: Box<&dyn Fn(usize, usize) -> usize>
+) -> Exit {
+  let mut exit_loc = rng(0, COLUMNS * ROWS);
+  while exit_loc == player_loc {
+    exit_loc = rng(0, COLUMNS * ROWS);
+  }
+  Exit::new(
+    exit_loc,
+    buf
+  )
+}
+
+fn gen_apple(
+  player_loc: usize,
+  buf: &mut ScreenBuffer,
+  rng: Box<&dyn Fn(usize, usize) -> usize>
+) -> Apple {
+  let mut apple_loc = rng(0, COLUMNS * ROWS);
+  while apple_loc == player_loc {
+    apple_loc = rng(0, COLUMNS * ROWS);
+  }
+  Apple::new(
+    apple_loc,
+    buf
+  )
+}
 
 #[wasm_bindgen]
 pub fn start() {
@@ -139,12 +171,33 @@ pub fn start() {
     log("Buffer created");
     maze.feed_whitespace(&mut buf);
     buf.draw();
+    let player_loc = rng(0, COLUMNS * ROWS);
     let mut player = Player::new(
-      rng(0, COLUMNS * ROWS),
+      player_loc.clone(),
       COLUMNS,
       ROWS,
       &mut buf
     );
+
+    let mut exit = gen_exit(
+      player_loc.clone(),
+      &mut buf,
+      Box::new(&rng)
+    );
+
+    let mut apples = Vec::new();
+    for _ in 0..APPLES_AMOUNT {
+      let mut apple_loc = rng(0, COLUMNS * ROWS);
+      while apple_loc == player_loc {
+        apple_loc = rng(0, COLUMNS * ROWS);
+      }
+      apples.push(
+        Apple::new(
+          apple_loc,
+          &mut buf
+        )
+      );
+    }
 
     let document = web_sys::window().unwrap().document().unwrap();
     let closure = Closure::wrap(Box::new(move |event: web_sys::KeyboardEvent| {
@@ -152,6 +205,22 @@ pub fn start() {
       // console::log_1(&(key_code.into()));
       let key_event: MoveEventKey = event.key_code().into();
       player.on_move(key_event, &maze, &mut buf);
+      if player.shares_loc(&exit) {
+        exit = gen_exit(
+          player.loc.clone(),
+          &mut buf,
+          Box::new(&rng)
+        );
+      }
+      for apple in apples.iter_mut() {
+        if player.shares_loc(apple) {
+          *apple = gen_apple(
+            player.loc.clone(),
+            &mut buf,
+            Box::new(&rng)
+          );
+        }
+      }
     }) as Box<dyn FnMut(_)>);
 
     document.add_event_listener_with_callback("keydown", closure.as_ref().unchecked_ref()).unwrap();

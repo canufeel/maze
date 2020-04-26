@@ -1,5 +1,6 @@
 use crate::maze::Maze;
 use crate::screen_buffer::{ScreenBuffer, Color};
+use crate::items::Locatable;
 
 pub enum MoveEventKey {
   ArrowUp,
@@ -22,19 +23,24 @@ impl From<u32> for MoveEventKey {
 }
 
 pub struct Player {
-  loc: usize,
+  pub loc: usize,
   width: usize,
   height: usize
 }
 
 impl Player {
-  pub fn new(loc: usize, width: usize, height: usize, buf: &mut ScreenBuffer) -> Self {
+  pub fn new(
+    loc: usize,
+    width: usize,
+    height: usize,
+    buf: &mut ScreenBuffer
+  ) -> Self {
     let pl = Player {
       loc,
       width,
       height
     };
-    buf.draw_player(pl.loc, Color::Green);
+    buf.draw_item(pl.loc, Color::Green);
     pl
   }
 
@@ -44,6 +50,10 @@ impl Player {
 
   fn can_move(&self, next_loc: usize, maze: &Maze) -> bool {
     maze.has_no_wall(self.loc, next_loc)
+  }
+
+  pub fn shares_loc(&self, item: &dyn Locatable) -> bool {
+    self.loc == item.get_loc()
   }
 
   pub fn on_move(&mut self, move_evt: MoveEventKey, maze: &Maze, buf: &mut ScreenBuffer) {
@@ -61,9 +71,9 @@ impl Player {
 
   fn move_to_loc(&mut self, next_loc: usize, maze: &Maze, buf: &mut ScreenBuffer) {
     if self.can_move(next_loc, maze) {
-      buf.draw_player(self.loc, Color::White);
+      buf.draw_item(self.loc, Color::White);
       self.loc = next_loc;
-      buf.draw_player(self.loc, Color::Green);
+      buf.draw_item(self.loc, Color::Green);
     }
   }
 }
