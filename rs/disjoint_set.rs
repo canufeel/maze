@@ -11,6 +11,10 @@ impl DisjointSet {
     }
   }
 
+  pub fn debug(&self) -> vec::Vec<isize> {
+    self.s.clone()
+  }
+
   pub fn get_parent(&self, x: usize) -> Option<usize> {
     match self.s[x] {
       y if y < 0 => None,
@@ -19,10 +23,9 @@ impl DisjointSet {
   }
 
   pub fn find(&self, x: usize) -> isize {
-    if self.s[x] < 0 {
-      return x as isize;
-    } else {
-      return self.find(self.s[x] as usize);
+    match self.s[x] < 0 {
+      true => x as isize,
+      false => self.find(self.s[x] as usize)
     }
   }
 
@@ -30,15 +33,25 @@ impl DisjointSet {
     self.s[root_two] = root_one as isize;
   }
 
-  pub fn is_single_set(&self) -> bool {
+  pub fn next_root_idx(&self) -> Option<usize> {
     let mut count = 0;
-    for i in &self.s {
+    for (idx, i) in self.s.iter().enumerate() {
       if *i == -1 && count == 1 {
-        return false;
+        return Some(idx);
       } else if *i == -1 {
         count += 1;
       }
     }
-    return count == 1;
+    if count == 0 {
+      unreachable!();
+    }
+    None
+  }
+
+  pub fn is_single_set(&self) -> bool {
+    match self.next_root_idx() {
+      Some(x) => false,
+      None => true
+    }
   }
 }

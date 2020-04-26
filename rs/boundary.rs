@@ -100,8 +100,8 @@ impl DrawApi for Api {
   }
 }
 
-static COLUMNS: usize = 5;
-static ROWS: usize = 5;
+static COLUMNS: usize = 60;
+static ROWS: usize = 40;
 static BLOCK_SIZE: usize = 20;
 
 #[wasm_bindgen]
@@ -129,5 +129,8 @@ pub fn start() {
     log("Buffer created");
     maze.feed_whitespace(&mut buf);
     buf.draw();
+    for i in maze.debug() {
+      console::log_1(&(i.clone() as i32).into());
+    }
   }
 }

@@ -1,6 +1,7 @@
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use crate::draw_api::DrawApi;
+// use web_sys::{console};
 
 #[derive(Copy, Clone)]
 pub enum Color {
@@ -112,10 +113,15 @@ impl ScreenBuffer {
     let right_row = right / self.columns;
     match (left, right) {
       (l, r) if l + 1 == r => {
+        // console::log_2(&(l.clone() as i32).into(), &(r.clone() as i32).into());
+        let y0 = left_row * self.block_size;
+        let y1 = (left_row + 1) * self.block_size;
+        let x = right_col * self.block_size;
+        // console::log_3(&(y0.clone() as i32).into(), &(y1.clone() as i32).into(), &(x.clone() as i32).into());
         self.fill_vertical_line(
-          left_row * self.block_size,
-          (left_row + 1) * self.block_size,
-          right_col * self.block_size,
+          y0,
+          y1,
+          x,
           color
         );
       },
